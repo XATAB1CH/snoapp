@@ -1,0 +1,41 @@
+version: "3"
+
+tasks:
+  migrate: 
+    aliases: 
+      - migrate
+    desk: "migrate postgres"
+    cmds:
+      - go run ./cmd/migrator/main.go --config=./config/local.yml
+
+  run:
+    aliases:
+      - run
+    desk: "run the app"
+    cmds:
+      - go run ./cmd/app/main.go
+
+  frontend:
+    aliases:
+      - frontend
+    desk: "run the frontend"
+    cmds:
+      - cd frontend && npm run dev
+
+  cloudflared-tunnel:
+    aliases:
+      - cloudflared
+    desk: "run the cloudflared tunnel"
+    cmds:
+      - cloudflared tunnel run
+
+  all_services:
+    aliases:
+      - all
+    desk: "run all services"
+    cmds:
+      - go run ./cmd/migrator/main.go --config=./config/local.yml &
+      - go run ./cmd/app/main.go &
+      - cd frontend && npm run dev &
+      - cloudflared tunnel run &
+      - wait
