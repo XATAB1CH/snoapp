@@ -20,7 +20,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// CORS
 	allowed := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
 	if len(allowed) == 0 || allowed[0] == "" {
-		allowed = []string{"http://localhost:5173", "https://snoapp.ru", "https://separated-buf-mix-insulation.trycloudflare.com", "http://localhost:8080"} // cloudflared заменить
+		allowed = []string{"http://localhost:5173", "https://snoapp.ru", "https://separated-buf-mix-insulation.trycloudflare.com", "http://localhost:8080", "https://95.174.93.104:3000"} // cloudflared заменить
 	}
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     allowed,

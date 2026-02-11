@@ -1,20 +1,28 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import fs from 'fs'
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,
-    port: 5173,
+    host: "0.0.0.0", // Доступность для всех IP
+    port: 3000,
     strictPort: true,
-    allowedHosts: ['tg.snoapp.ru'],
+    allowedHosts: ['95.174.93.104'], // Публичный IP
     hmr: {
-      host: 'tg.snoapp.ru',
+      host: '95.174.93.104',
       protocol: 'wss',
       clientPort: 443,
     },
+    https: {
+      key: fs.readFileSync('../ssl_keys/key.pem'),
+      cert: fs.readFileSync('../ssl_keys/cert.pem'),
+    },
   },
   preview: {
-    allowedHosts: ['tg.snoapp.ru'],
+    allowedHosts: ['95.174.93.104'],
+  },
+  build: {
+    outDir: 'dist',
   },
 })

@@ -27,7 +27,7 @@ func HandleStart(c tg.Context) error {
 	var text string
 
 	appButton = menu.WebApp("Запустить", webApp)
-	text = "Официальное приложение СНО"
+	text = "Привет! Это официальное приложение СНО"
 
 	// Добавление кнопок в меню
 	menu.Inline(

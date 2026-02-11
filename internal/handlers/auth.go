@@ -27,5 +27,5 @@ func (hm *HandlerManager) AuthHandler(c *gin.Context) {
 
 	// fmt.Println("Всё ок!", result)
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.Status, result)
 }

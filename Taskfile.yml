@@ -6,7 +6,7 @@ tasks:
       - migrate
     desk: "migrate postgres"
     cmds:
-      - go run ./cmd/migrator/main.go --config=./config/local.yml
+      - go run ./cmd/migrator/main.go
 
   run:
     aliases:

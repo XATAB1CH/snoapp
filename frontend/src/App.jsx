@@ -96,7 +96,7 @@ function AuthGate({ children }) {
   if (state.error) {
     return (
       <div className="page" style={{ padding: 16 }}>
-        <h3>Ошибка авторизации</h3>
+        <h3>Ошибка автории</h3>
         <pre style={{ whiteSpace: "pre-wrap" }}>{String(state.error)}</pre>
       </div>
     );
