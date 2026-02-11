@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useEffect, useState } from "react";
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { UserProvider } from "./state/UserContext.jsx";
@@ -21,7 +20,7 @@ function getInitDataRaw() {
   if (!raw) {
     const params = new URLSearchParams(window.location.search);
     const q = params.get("initData");
-    if (q) return q;
+    return q || "";
   }
   return raw;
 }
@@ -40,55 +39,65 @@ function AuthGate({ children }) {
   const [state, setState] = useState({
     loading: true,
     error: null,
-    tgUser: null,       // ответ /api/auth (минимум содержит tg_id)
-    isRegistered: false
+    tgUser: null,
+    isRegistered: false,
   });
   const navigate = useNavigate();
 
   useEffect(() => {
-    (async () => {
+    const fetchAuthData = async () => {
       try {
         const raw = getInitDataRaw();
         if (!raw) {
-          setState(s => ({ ...s, loading: false, error: "NOT_IN_TG" }));
+          setState({ loading: false, error: "NOT_IN_TG" });
           return;
         }
 
-        // 1) верификация initData
+        // 1) Верификация initData
         const authRes = await fetch(`/api/auth?initData=${encodeURIComponent(raw)}`, {
           method: "GET",
           credentials: "include",
         });
+
+        const contentType = authRes.headers.get("Content-Type");
+        const responseText = await authRes.text();
+
         if (!authRes.ok) {
-          const msg = await authRes.text().catch(() => "Auth failed");
-          throw new Error(msg || "Auth failed");
-        }
-        const tgUser = await authRes.json();
-        const tgId = tgUser?.tg_id || tgUser?.TGID || tgUser?.id;
-        if (!tgId) throw new Error("Не удалось получить tg_id из ответа /auth");
-
-        // 2) проверка регистрации
-        const regRes = await fetch(`/api/students/${encodeURIComponent(tgId)}`, {
-          method: "GET",
-          credentials: "include",
-        });
-
-        // если пользователя нет — на регистрацию
-        if (regRes.status === 404 || regRes.status === 500) {
-          setState({ loading: false, error: null, tgUser, isRegistered: false });
-          navigate("/register", { replace: true, state: { tgUser } });
-          return;
-        }
-        if (!regRes.ok) {
-          const msg = await regRes.text().catch(() => "Registration check failed");
-          throw new Error(msg || "Registration check failed");
+          throw new Error(responseText || "Auth failed");
         }
 
-        setState({ loading: false, error: null, tgUser, isRegistered: true });
+        if (contentType && contentType.includes("application/json")) {
+          const tgUser = JSON.parse(responseText);
+          const tgId = tgUser?.tg_id || tgUser?.TGID || tgUser?.id;
+          if (!tgId) throw new Error("Не удалось получить tg_id из ответа /auth");
+
+          // 2) Проверка регистрации
+          const regRes = await fetch(`/api/students/${encodeURIComponent(tgId)}`, {
+            method: "GET",
+            credentials: "include",
+          });
+
+          if (regRes.status === 404 || regRes.status === 500) {
+            setState({ loading: false, tgUser, isRegistered: false });
+            navigate("/register", { replace: true, state: { tgUser } });
+            return;
+          }
+
+          if (!regRes.ok) {
+            const msg = await regRes.text();
+            throw new Error(msg || "Registration check failed");
+          }
+
+          setState({ loading: false, tgUser, isRegistered: true });
+        } else {
+          throw new Error(`Expected JSON, but got: ${responseText}`);
+        }
       } catch (e) {
         setState({ loading: false, error: e.message || "Auth error", tgUser: null, isRegistered: false });
       }
-    })();
+    };
+
+    fetchAuthData();
   }, [navigate]);
 
   if (state.loading) return <LoadingSpinner />;
@@ -96,19 +105,14 @@ function AuthGate({ children }) {
   if (state.error) {
     return (
       <div className="page" style={{ padding: 16 }}>
-        <h3>Ошибка автории</h3>
-        <pre style={{ whiteSpace: "pre-wrap" }}>{String(state.error)}</pre>
+        <h3>Ошибка авторизации</h3>
+        <pre style={{ whiteSpace: "pre-wrap" }}>{state.error}</pre>
       </div>
     );
   }
 
-  // Успешно авторизован → оборачиваем приложение провайдером,
-  // передаём внутрь уже полученный ответ /api/auth (tg_id, tg_name, ...)
-  return (
-    <UserProvider prefetchedAuth={state.tgUser}>
-      {children}
-    </UserProvider>
-  );
+  // Успешно авторизован
+  return <UserProvider prefetchedAuth={state.tgUser}>{children}</UserProvider>;
 }
 
 // ===== Layout — скрываем Header/TabBar для /register =====

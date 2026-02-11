@@ -9,11 +9,6 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     allowedHosts: ['95.174.93.104'], // Публичный IP
-    hmr: {
-      host: '95.174.93.104',
-      protocol: 'wss',
-      clientPort: 443,
-    },
     https: {
       key: fs.readFileSync('../ssl_keys/key.pem'),
       cert: fs.readFileSync('../ssl_keys/cert.pem'),
